@@ -1,71 +1,20 @@
 module Main exposing (..)
 
-import Html exposing (Html, div, text)
-import Html.App
-import Simulator.Simulator as Simulator
+import Navigation
+import Routing exposing (Route)
+import Models exposing (AppModel, initialModel)
+import Messages exposing (Msg(..))
+import View exposing (view)
+import Update exposing (update)
 
+init : Result String Route -> ( AppModel, Cmd Msg )
+init result =
+    let
+        currentRoute =
+            Routing.routeFromResult result
+    in
+    ( initialModel currentRoute, Cmd.none )
 
-
--- MODEL
-
-
-type alias AppModel =
-    {simulatorModel : Simulator.Simulator
-    }
-
-initialModel : AppModel
-initialModel =
-  { simulatorModel = Simulator.initialModel
-  }
-
-init : ( AppModel, Cmd Msg )
-init =
-    ( initialModel, Cmd.none )
-
-
-
--- MESSAGES
-
-
-type Msg
-    = SimulatorMsg Simulator.Msg
-
-
-
--- VIEW
-
-
-view : AppModel -> Html Msg
-view model =
-    div[][
-    div []
-        [ page model ],
-      div[][
-      Html.hr [] [],
-      Html.text <| toString model
-      ]
-    ]
-
-page : AppModel -> Html Msg
-page model =
-   Html.App.map SimulatorMsg (Simulator.view model.simulatorModel)
-
--- UPDATE
-
-
-update : Msg -> AppModel -> ( AppModel, Cmd Msg )
-update message model =
-    case message of
-        SimulatorMsg subMsg ->
-            let
-              ( updateSimulatorModel, simulatorCmd) =
-                  Simulator.update subMsg model.simulatorModel
-            in
-              ( {model| simulatorModel = updateSimulatorModel }, Cmd.map SimulatorMsg simulatorCmd )
-
-
-
--- SUBSCRIPTIONS
 
 
 subscriptions : AppModel -> Sub Msg
@@ -73,15 +22,21 @@ subscriptions model =
     Sub.none
 
 
-
--- MAIN
+urlUpdate : Result String Route -> AppModel -> ( AppModel, Cmd Msg )
+urlUpdate result model =
+    let
+        currentRoute =
+            Routing.routeFromResult result
+    in
+        ( { model | route = currentRoute }, Cmd.none )
 
 
 main : Program Never
 main =
-    Html.App.program
+    Navigation.program Routing.parser
         { init = init
         , view = view
         , update = update
+        , urlUpdate = urlUpdate
         , subscriptions = subscriptions
         }

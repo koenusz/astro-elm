@@ -11,12 +11,11 @@ import Html.Events exposing (onClick)
 type alias Simulator =
     { count : Int,
       play : Bool
-
     }
 
 
-initialModel : Simulator
-initialModel =
+initSimModel : Simulator
+initSimModel =
     { count = 0,
       play = False
     }
