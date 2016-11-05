@@ -1,6 +1,6 @@
 module View exposing (..)
 
-import Html exposing (Html, div, text, span, p)
+import Html exposing (Html, div, text, span)
 import Html.Attributes exposing (class)
 import Html.App
 import Messages exposing (..)
@@ -12,18 +12,19 @@ import Research.View exposing (researchBtn)
 import Fleet.View exposing (fleetBtn)
 import Routing exposing (Route(..))
 
-
 view : AppModel -> Html Msg
 view model =
-    div[][
-    div[class "overflow-hidden white bg-blue"][navBar model],
-    p [][],
-    div []
+    div[]
+      [
+      div [class "overflow-hidden white bg-blue"]
+        [navBar model],
+      div []
         [ page model ],
-      div[][
-      Html.hr [] [],
-      Html.text <| toString model
-      ]
+      div []
+        [
+        Html.hr [] [],
+        Html.text <| toString model
+        ]
     ]
 
 
