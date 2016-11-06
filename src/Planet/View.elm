@@ -15,12 +15,12 @@ import Planet.Messages exposing(Msg(..))
 view : PlanetModel -> Html Msg
 view model =
     div [class "planetview clearfix"]
-        [
-        div [class "col"]
-            [contextMenu],
-        div [class "col"]
-            [canvas[id "myCanvas", width 200, height 100][]],
-        button [ onClick Init ][ Html.text "Init"]
+        [ div [class "col"]
+            [contextMenu]
+        , div [class "col"]
+            [canvas[id "myCanvas", width 200, height 100][]]
+        , button [ onClick Init ][ Html.text "Init"]
+        , button [ onClick Tile ][ Html.text "Tile"]
         ]
 
 
