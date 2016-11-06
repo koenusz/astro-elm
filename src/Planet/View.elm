@@ -1,23 +1,30 @@
 module Planet.View exposing (..)
 
-import Html exposing (Html, div, text, button, i, Attribute)
+import Html exposing (Html, div, text, button, i, Attribute, span, canvas)
 import Html.Events exposing (onClick)
-import Html.Attributes exposing (class, style)
+import Html.Attributes exposing (class, style, id, width, height)
 import Html exposing (Html, div, text)
 import Planet.Models exposing(PlanetModel)
 import Planet.Messages exposing(Msg(..))
 
 
+
+
+
+
 view : PlanetModel -> Html Msg
 view model =
-    div [class "planetview"]
+    div [class "planetview clearfix"]
         [
-        div []
-          [contextMenu],
-        div []
-            []
-
+        div [class "col"]
+            [contextMenu],
+        div [class "col"]
+            [canvas[id "myCanvas", width 200, height 100][]],
+        button [ onClick Init ][ Html.text "Init"]
         ]
+
+
+
 
 contextStyle : Attribute msg
 contextStyle =
@@ -29,19 +36,19 @@ contextStyle =
 
 contextMenu : Html Planet.Messages.Msg
 contextMenu =
-  div [ class "context-menu p1",
+  div [ class "context-menu p1 overflow-hidden",
         contextStyle
       ]
     [
       button
         [class "btn regular"]
-        [ text "Designate"],
+        [ Html.text "Designate"],
       button
         [class "btn regular"]
-        [ text "Construct"],
+        [ Html.text "Construct"],
       button
         [class "btn regular"]
-        [ text "Space Port"]
+        [ Html.text "Space Port"]
     ]
 
 
@@ -52,4 +59,4 @@ planetBtn =
         [ class "btn regular"
         , onClick ShowPlanet
         ]
-        [ i [ class "fa mr1" ] [], text "Planet" ]
+        [ i [ class "fa mr1" ] [], Html.text "Planet" ]

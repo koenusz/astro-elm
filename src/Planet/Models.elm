@@ -1,8 +1,15 @@
 module Planet.Models exposing (PlanetModel, init)
 
+type Size
+  = Tiny   --4x3
+  | Small  --5x4
+  | Medium --6x5
+  | Large  --7x6
+  | Huge   --8x7
 
 type Biome
   = Ocean
+  | Barren
   | Arctic
   | Plains
   | Desert
