@@ -6,15 +6,16 @@ import Models exposing (AppModel, initialModel)
 import Messages exposing (Msg(..))
 import View exposing (view)
 import Update exposing (update)
+import Navigation exposing (Location)
 
-init : Result String Route -> ( AppModel, Cmd Msg )
-init result =
+
+init : Location -> ( AppModel, Cmd Msg )
+init location =
     let
         currentRoute =
-            Routing.routeFromResult result
+            Routing.parseLocation location
     in
-    ( initialModel currentRoute, Cmd.none )
-
+        ( initialModel currentRoute, Cmd.none )
 
 
 subscriptions : AppModel -> Sub Msg
@@ -22,21 +23,20 @@ subscriptions model =
     Sub.none
 
 
-urlUpdate : Result String Route -> AppModel -> ( AppModel, Cmd Msg )
-urlUpdate result model =
+urlUpdate : Location -> AppModel -> ( AppModel, Cmd Msg )
+urlUpdate location model =
     let
         currentRoute =
-            Routing.routeFromResult result
+            Routing.parseLocation location
     in
         ( { model | route = currentRoute }, Cmd.none )
 
 
-main : Program Never
+main : Program Never AppModel Msg
 main =
-    Navigation.program Routing.parser
+    Navigation.program OnLocationChange
         { init = init
         , view = view
         , update = update
-        , urlUpdate = urlUpdate
         , subscriptions = subscriptions
         }
