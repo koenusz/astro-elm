@@ -7,6 +7,7 @@ import Messages exposing (Msg(..))
 import View exposing (view)
 import Update exposing (update)
 import Navigation exposing (Location)
+import Subscriptions exposing (subscriptions)
 
 
 init : Location -> ( AppModel, Cmd Msg )
@@ -16,20 +17,6 @@ init location =
             Routing.parseLocation location
     in
         ( initialModel currentRoute, Cmd.none )
-
-
-subscriptions : AppModel -> Sub Msg
-subscriptions model =
-    Sub.none
-
-
-urlUpdate : Location -> AppModel -> ( AppModel, Cmd Msg )
-urlUpdate location model =
-    let
-        currentRoute =
-            Routing.parseLocation location
-    in
-        ( { model | route = currentRoute }, Cmd.none )
 
 
 main : Program Never AppModel Msg

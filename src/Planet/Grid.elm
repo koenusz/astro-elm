@@ -283,15 +283,3 @@ terrainTypeDecoder ttype =
 subscriptions : Model -> Sub Action
 subscriptions _ =
     WebSocket.listen echoServer LoadTiles
-
-
-
---
--- main : Program Never Model Action
--- main =
---     Html.program
---         { init = init
---         , view = view
---         , subscriptions = subscriptions
---         , update = update
---         }
