@@ -5,9 +5,8 @@ import Html.Attributes
 import Html.Events
 import List
 import WebSocket
-import Json.Decode exposing (int, string, float, Decoder, field, map2, andThen, list, decodeString)
-import Json.Decode.Pipeline exposing (decode, required, hardcoded)
-import Json.Encode exposing (encode, object)
+import Planet.Codec exposing (decodePlanet, tileRequest)
+import Planet.Types exposing (..)
 
 
 tileWidth : Int
@@ -26,79 +25,6 @@ tileHeight =
     100
 
 
-type Action
-    = MouseClick ( Int, Int )
-    | LoadTiles String
-    | RequestTiles
-
-
-
--- | BackendMsg Backend.Msg
-
-
-type TerrainType
-    = Arctic
-    | Barren
-    | Desert
-    | Forest
-    | Jungle
-    | Mountains
-    | Water
-
-
-terrainString : TerrainType -> String
-terrainString ttype =
-    case ttype of
-        Arctic ->
-            "arctic"
-
-        Barren ->
-            "barren"
-
-        Desert ->
-            "desert"
-
-        Forest ->
-            "forest"
-
-        Jungle ->
-            "jungle"
-
-        Mountains ->
-            "mountains"
-
-        Water ->
-            "water"
-
-
-stringTerrain : String -> TerrainType
-stringTerrain string =
-    case string of
-        "Arctic" ->
-            Arctic
-
-        "Barren" ->
-            Barren
-
-        "Desert" ->
-            Desert
-
-        "Forest" ->
-            Forest
-
-        "Jungle" ->
-            Jungle
-
-        "Mountains" ->
-            Mountains
-
-        "Water" ->
-            Water
-
-        _ ->
-            Debug.crash string
-
-
 getTerrain : Model -> ( Int, Int ) -> TerrainType
 getTerrain model position =
     let
@@ -113,45 +39,35 @@ getTerrain model position =
                 tile.ttype
 
 
-type alias Tile =
-    { position : ( Int, Int )
-    , ttype : TerrainType
-    }
-
-
-type alias Model =
-    { planetSize : ( Int, Int )
-    , tiles : List Tile
-    , selected : ( Int, Int )
-    }
+emptyModel : Model
+emptyModel =
+    { planets = [] }
 
 
 init : ( Model, Cmd Action )
 init =
-    ( { planetSize = ( 3, 3 )
-      , tiles =
-            [ { position = ( 0, 0 ), ttype = Arctic }
-            , { position = ( 1, 0 ), ttype = Arctic }
-            , { position = ( 2, 0 ), ttype = Barren }
-            , { position = ( 0, 1 ), ttype = Desert }
-            , { position = ( 1, 1 ), ttype = Forest }
-            , { position = ( 2, 1 ), ttype = Jungle }
-            , { position = ( 0, 2 ), ttype = Mountains }
-            , { position = ( 1, 2 ), ttype = Water }
-            , { position = ( 2, 2 ), ttype = Arctic }
+    ( { planets =
+            [ { planetSize = Tiny
+              , tiles =
+                    [ { terrainType = Arctic, specialisation = "None" }
+                    , { terrainType = Arctic, specialisation = "None" }
+                    , { terrainType = Barren, specialisation = "None" }
+                    , { terrainType = Desert, specialisation = "None" }
+                    , { terrainType = Forest, specialisation = "None" }
+                    , { terrainType = Jungle, specialisation = "None" }
+                    , { terrainType = Mountains, specialisation = "None" }
+                    , { terrainType = Water, specialisation = "None" }
+                    , { terrainType = Arctic, specialisation = "None" }
+                    , { terrainType = Arctic, specialisation = "None" }
+                    , { terrainType = Arctic, specialisation = "None" }
+                    , { terrainType = Arctic, specialisation = "None" }
+                    ]
+              , selected = ( 0, 0 )
+              }
             ]
-      , selected = ( 0, 0 )
       }
     , Cmd.none
     )
-
-
-emptyPlanet : Model
-emptyPlanet =
-    { planetSize = ( 0, 0 )
-    , tiles = []
-    , selected = ( 0, 0 )
-    }
 
 
 renderTile : Model -> ( Int, Int ) -> Html Action
@@ -164,7 +80,7 @@ renderTile model position =
                 "yellow"
 
         terrain =
-            terrainString (getTerrain model position)
+            toString (getTerrain model position)
     in
         Html.img
             [ Html.Attributes.src ("resources/terrain/" ++ terrain ++ ".png")
@@ -217,67 +133,18 @@ update action model =
             Debug.log "position"
                 ( { model | selected = position }, Cmd.none )
 
-        LoadTiles newModel ->
-            case decodeString decodePlanet newModel of
+        LoadTiles json ->
+            case decodePlanet of
                 Result.Ok planet ->
                     Debug.log "planet"
                         ( planet, Cmd.none )
 
                 Result.Err message ->
                     Debug.log ("Grid.elm 227 " ++ message)
-                        ( emptyPlanet, Cmd.none )
+                        ( emptyModel, Cmd.none )
 
         RequestTiles ->
             ( model, WebSocket.send echoServer (tileRequest "1") )
-
-
-tileRequest : String -> String
-tileRequest planet =
-    let
-        data =
-            object
-                [ ( "entityType", Json.Encode.string "planet" )
-                , ( "components", Json.Encode.list [ Json.Encode.string "surface" ] )
-                , ( "entityId", Json.Encode.string planet )
-                ]
-    in
-        object
-            [ ( "type", Json.Encode.string "datarequest" )
-            , ( "data", data )
-            ]
-            |> encode 0
-
-
-decodePlanet : Decoder Model
-decodePlanet =
-    let
-        coordinates =
-            decode (,)
-                |> required "x" int
-                |> required "y" int
-    in
-        decode Model
-            |> required "size" coordinates
-            |> required "tiles" (list tileDecoder)
-            |> hardcoded ( 0, 0 )
-
-
-tileDecoder : Decoder Tile
-tileDecoder =
-    let
-        coordinates =
-            decode (,)
-                |> required "x" int
-                |> required "y" int
-    in
-        decode Tile
-            |> required "position" coordinates
-            |> required "type" (andThen terrainTypeDecoder string)
-
-
-terrainTypeDecoder : String -> Decoder TerrainType
-terrainTypeDecoder ttype =
-    decode (stringTerrain ttype)
 
 
 subscriptions : Model -> Sub Action
