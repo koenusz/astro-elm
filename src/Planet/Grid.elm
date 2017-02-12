@@ -25,30 +25,34 @@ tileHeight =
     100
 
 
-getTerrain : Model -> ( Int, Int ) -> TerrainType
-getTerrain model position =
-    let
-        tile =
-            List.head (List.filter (\t -> t.position == position) model.tiles)
-    in
-        case tile of
-            Nothing ->
-                Debug.crash "no tile"
-
-            Just tile ->
-                tile.ttype
+type alias Model =
+    { planet : PlanetEntity
+    }
 
 
 emptyModel : Model
 emptyModel =
-    { planets = [] }
+    { planet =
+        { surface =
+            { planetSize = One
+            , tiles = []
+            , selected = ( 0, 0 )
+            }
+        , celestialBody =
+            { name = ""
+            , cbtype = Asteroid
+            }
+        , position = { x = 0, y = 0, angle = 0, radius = 0, orbiting = -1 }
+        }
+    }
 
 
 init : ( Model, Cmd Action )
 init =
-    ( { planets =
-            [ { planetSize = Tiny
-              , tiles =
+    ( { planet =
+            { surface =
+                { planetSize = Tiny
+                , tiles =
                     [ { terrainType = Arctic, specialisation = "None" }
                     , { terrainType = Arctic, specialisation = "None" }
                     , { terrainType = Barren, specialisation = "None" }
@@ -62,25 +66,70 @@ init =
                     , { terrainType = Arctic, specialisation = "None" }
                     , { terrainType = Arctic, specialisation = "None" }
                     ]
-              , selected = ( 0, 0 )
-              }
-            ]
+                , selected = ( 0, 0 )
+                }
+            , celestialBody =
+                { name = "init"
+                , cbtype = Planet
+                }
+            , position = { x = 0, y = 0, angle = 0, radius = 0, orbiting = -1 }
+            }
       }
     , Cmd.none
     )
 
 
-renderTile : Model -> ( Int, Int ) -> Html Action
-renderTile model position =
+
+-- getTerrain : Model -> ( Int, Int ) -> TerrainType
+-- getTerrain model position =
+--     let
+--         tile =
+--             List.head (List.filter (\t -> t.position == position) model.planet.surface.tiles)
+--     in
+--         case tile of
+--             Nothing ->
+--                 Debug.crash "no tile"
+--
+--             Just tile ->
+--                 tile.ttype
+
+
+type alias Options =
+    { preventDefault : Bool, stopPropagation : Bool }
+
+
+coordinatesFromIndex : Int -> Size -> ( Int, Int )
+coordinatesFromIndex index surfaceSize =
     let
+        intSize =
+            sizeTypeToInt surfaceSize
+    in
+        ( rem index (Tuple.first intSize), index // (Tuple.second intSize) )
+
+
+renderTiles : Surface -> Html Action
+renderTiles surface =
+    let
+        tiles =
+            surface.tiles
+    in
+        Html.div [] (List.indexedMap (\i tile -> renderTile tile surface.planetSize surface.selected i) tiles)
+
+
+renderTile : TerrainTile -> Size -> ( Int, Int ) -> Int -> Html Action
+renderTile tile planetSize selected index =
+    let
+        position =
+            coordinatesFromIndex index planetSize
+
         color =
-            if model.selected == position then
+            if selected == position then
                 "red"
             else
                 "yellow"
 
         terrain =
-            toString (getTerrain model position)
+            toString tile.terrainType
     in
         Html.img
             [ Html.Attributes.src ("resources/terrain/" ++ terrain ++ ".png")
@@ -98,31 +147,29 @@ renderTile model position =
             []
 
 
-type alias Options =
-    { preventDefault : Bool, stopPropagation : Bool }
 
-
-renderRow : Model -> Int -> Html Action
-renderRow model y =
-    List.range 0 (Tuple.second model.planetSize - 1)
-        |> List.map (\x -> renderTile model ( x, y ))
-        |> Html.div
-            []
+-- renderRow : Model -> Int -> Html Action
+-- renderRow model y =
+--     List.range 0 (Tuple.second (sizeTypeToInt model.planet.surface.planetSize) - 1)
+--         |> List.map  (\x -> renderTile model.planet.surface.tiles.map model.selected == ( x, y ))
+--         |> Html.div
+--             []
 
 
 view : Model -> Html Action
 view model =
     Html.div []
         [ Html.button [ Html.Events.onClick RequestTiles ] [ Html.text "click me" ]
-        , List.range 0 (Tuple.first model.planetSize - 1)
-            |> List.map (\y -> renderRow model y)
-            |> Html.div
-                [ Html.Attributes.style
-                    [ ( "position", "relative" )
-                    , ( "width", "100vw" )
-                    , ( "height", "100vh" )
-                    ]
-                ]
+        , renderTiles model.planet.surface
+          -- , List.range 0 (Tuple.first (sizeTypeToInt model.planet.surface.planetSize) - 1)
+          --     |> List.map (\y -> renderRow model y)
+          --     |> Html.div
+          --         [ Html.Attributes.style
+          --             [ ( "position", "relative" )
+          --             , ( "width", "100vw" )
+          --             , ( "height", "100vh" )
+          --             ]
+          --         ]
         ]
 
 
@@ -130,14 +177,21 @@ update : Action -> Model -> ( Model, Cmd Action )
 update action model =
     case action of
         MouseClick position ->
-            Debug.log "position"
-                ( { model | selected = position }, Cmd.none )
+            let
+                planet =
+                    model.planet
+
+                surface =
+                    model.planet.surface
+            in
+                Debug.log "position"
+                    ( { model | planet = { planet | surface = { surface | selected = position } } }, Cmd.none )
 
         LoadTiles json ->
-            case decodePlanet of
-                Result.Ok planet ->
+            case decodePlanet json of
+                Result.Ok updatedplanet ->
                     Debug.log "planet"
-                        ( planet, Cmd.none )
+                        ( { model | planet = updatedplanet }, Cmd.none )
 
                 Result.Err message ->
                     Debug.log ("Grid.elm 227 " ++ message)

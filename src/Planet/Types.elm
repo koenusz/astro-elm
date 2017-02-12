@@ -7,11 +7,6 @@ type alias TerrainTile =
     }
 
 
-type alias Model =
-    { planets : List PlanetEntity
-    }
-
-
 type alias PlanetEntity =
     { surface : Surface
     , celestialBody : CelestialBody
