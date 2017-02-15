@@ -1,10 +1,10 @@
 module Planet.Messages exposing (Msg(..))
 
-import Planet.Grid
+import Planet.Types
 
 
 type Msg
     = ShowPlanet
     | Init
     | Tile
-    | GridMsg Planet.Grid.Action
+    | GridMsg Planet.Types.Action

@@ -23,23 +23,34 @@ tileRequest planet =
             |> encode 0
 
 
-decodePlanet : Decoder PlanetEntity
-decodePlanet =
+responseDecoder : Decoder PlanetResponse
+responseDecoder =
+    decode PlanetResponse
+        |> required "entities" (dict entityDecoder)
+
+
+entityDecoder : Decoder Entity
+entityDecoder =
+    map PlanetRecord planetDecoder
+
+
+planetDecoder : Decoder PlanetEntity
+planetDecoder =
     decode PlanetEntity
-        |> required "Surface" decodeSurface
-        |> required "CelestialBody" decodeCelestialBody
-        |> required "Position" decodePosition
+        |> required "Surface" surfaceDecoder
+        |> required "CelestialBody" celestialBodyDecoder
+        |> required "Position" positionDecoder
 
 
-decodeCelestialBody : Decoder CelestialBody
-decodeCelestialBody =
+celestialBodyDecoder : Decoder CelestialBody
+celestialBodyDecoder =
     decode CelestialBody
         |> required "name" string
         |> required "type" celestialBodyTypeDecoder
 
 
-decodePosition : Decoder Position
-decodePosition =
+positionDecoder : Decoder Position
+positionDecoder =
     decode Position
         |> required "x" int
         |> required "y" int
@@ -48,16 +59,16 @@ decodePosition =
         |> required "orbiting" int
 
 
-decodeSurface : Decoder Surface
-decodeSurface =
+surfaceDecoder : Decoder Surface
+surfaceDecoder =
     decode Surface
         |> required "size" sizeDecoder
-        |> required "terrainTiles" (list decodeTerrainTile)
+        |> required "terrainTiles" (list terraintileDecoder)
         |> hardcoded ( 0, 0 )
 
 
-decodeTerrainTile : Decoder TerrainTile
-decodeTerrainTile =
+terraintileDecoder : Decoder TerrainTile
+terraintileDecoder =
     decode TerrainTile
         |> required "terrainType" terrainTypeDecoder
         |> required "specialisation" string

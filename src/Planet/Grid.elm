@@ -5,8 +5,9 @@ import Html.Attributes
 import Html.Events
 import List
 import WebSocket
-import Planet.Codec exposing (decodePlanet, tileRequest)
+import Planet.Codec exposing (planetDecoder, tileRequest)
 import Planet.Types exposing (..)
+import Json.Decode exposing (decodeString)
 
 
 tileWidth : Int
@@ -101,10 +102,11 @@ type alias Options =
 coordinatesFromIndex : Int -> Size -> ( Int, Int )
 coordinatesFromIndex index surfaceSize =
     let
-        intSize =
-            sizeTypeToInt surfaceSize
+        gridWidth =
+            Tuple.first (sizeTypeToInt surfaceSize)
     in
-        ( rem index (Tuple.first intSize), index // (Tuple.second intSize) )
+        ( rem index gridWidth, index // gridWidth )
+            |> Debug.log "coordinates"
 
 
 renderTiles : Surface -> Html Action
@@ -147,29 +149,18 @@ renderTile tile planetSize selected index =
             []
 
 
-
--- renderRow : Model -> Int -> Html Action
--- renderRow model y =
---     List.range 0 (Tuple.second (sizeTypeToInt model.planet.surface.planetSize) - 1)
---         |> List.map  (\x -> renderTile model.planet.surface.tiles.map model.selected == ( x, y ))
---         |> Html.div
---             []
-
-
 view : Model -> Html Action
 view model =
     Html.div []
         [ Html.button [ Html.Events.onClick RequestTiles ] [ Html.text "click me" ]
-        , renderTiles model.planet.surface
-          -- , List.range 0 (Tuple.first (sizeTypeToInt model.planet.surface.planetSize) - 1)
-          --     |> List.map (\y -> renderRow model y)
-          --     |> Html.div
-          --         [ Html.Attributes.style
-          --             [ ( "position", "relative" )
-          --             , ( "width", "100vw" )
-          --             , ( "height", "100vh" )
-          --             ]
-          --         ]
+        , Html.div
+            [ Html.Attributes.style
+                [ ( "position", "relative" )
+                , ( "width", "100vw" )
+                , ( "height", "100vh" )
+                ]
+            ]
+            [ renderTiles model.planet.surface ]
         ]
 
 
@@ -188,7 +179,7 @@ update action model =
                     ( { model | planet = { planet | surface = { surface | selected = position } } }, Cmd.none )
 
         LoadTiles json ->
-            case decodePlanet json of
+            case decodeString planetDecoder json of
                 Result.Ok updatedplanet ->
                     Debug.log "planet"
                         ( { model | planet = updatedplanet }, Cmd.none )

@@ -1,9 +1,33 @@
 module Planet.Types exposing (..)
 
+import Dict
+
 
 type alias TerrainTile =
     { terrainType : TerrainType
     , specialisation : String
+    }
+
+
+
+--TODO move this
+
+
+type Entity
+    = PlanetRecord PlanetEntity
+    | ShipRecord ShipEntity
+
+
+
+--TODO move this
+
+
+type alias ShipEntity =
+    {}
+
+
+type alias PlanetResponse =
+    { entities : Dict.Dict String Entity
     }
 
 
@@ -132,33 +156,6 @@ sizeTypeToInt size =
 
         Huge ->
             ( 8, 7 )
-
-
-
---
---terrainString : TerrainType -> String
---terrainString ttype =
---    case ttype of
---        Arctic ->
---            "arctic"
---
---        Barren ->
---            "barren"
---
---        Desert ->
---            "desert"
---
---        Forest ->
---            "forest"
---
---        Jungle ->
---            "jungle"
---
---        Mountains ->
---            "mountains"
---
---        Water ->
---            "water"
 
 
 stringToTerrain : String -> TerrainType
