@@ -4,8 +4,9 @@ import Html exposing (Html)
 import Html.Attributes
 import Html.Events
 import List
+import Dict
 import WebSocket
-import Planet.Codec exposing (planetDecoder, tileRequest)
+import Planet.Codec exposing (responseDecoder, tileRequest)
 import Planet.Types exposing (..)
 import Json.Decode exposing (decodeString)
 
@@ -17,7 +18,6 @@ tileWidth =
 
 echoServer : String
 echoServer =
-    -- "ws://echo.websocket.org"
     "ws://127.0.0.1:8080/websocket"
 
 
@@ -78,21 +78,6 @@ init =
       }
     , Cmd.none
     )
-
-
-
--- getTerrain : Model -> ( Int, Int ) -> TerrainType
--- getTerrain model position =
---     let
---         tile =
---             List.head (List.filter (\t -> t.position == position) model.planet.surface.tiles)
---     in
---         case tile of
---             Nothing ->
---                 Debug.crash "no tile"
---
---             Just tile ->
---                 tile.ttype
 
 
 type alias Options =
@@ -179,17 +164,31 @@ update action model =
                     ( { model | planet = { planet | surface = { surface | selected = position } } }, Cmd.none )
 
         LoadTiles json ->
-            case decodeString planetDecoder json of
-                Result.Ok updatedplanet ->
-                    Debug.log "planet"
-                        ( { model | planet = updatedplanet }, Cmd.none )
+            case decodeString responseDecoder json of
+                Result.Ok response ->
+                    let
+                        newPlanet =
+                            case Dict.get "1" response.entities of
+                                Nothing ->
+                                    emptyModel.planet
+
+                                Just planet ->
+                                    case planet of
+                                        PlanetRecord e ->
+                                            e
+
+                                        _ ->
+                                            emptyModel.planet
+                    in
+                        Debug.log "planet"
+                            ( { model | planet = newPlanet }, Cmd.none )
 
                 Result.Err message ->
                     Debug.log ("Grid.elm 227 " ++ message)
                         ( emptyModel, Cmd.none )
 
         RequestTiles ->
-            ( model, WebSocket.send echoServer (tileRequest "1") )
+            ( model, WebSocket.send echoServer (tileRequest [ "1" ]) )
 
 
 subscriptions : Model -> Sub Action

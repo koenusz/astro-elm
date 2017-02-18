@@ -6,14 +6,26 @@ import Json.Encode exposing (encode, object)
 import Planet.Types exposing (..)
 
 
-tileRequest : String -> String
-tileRequest planet =
+tileRequest : List String -> String
+tileRequest planets =
     let
         data =
             object
                 [ ( "entityType", Json.Encode.string "planet" )
-                , ( "components", Json.Encode.list [ Json.Encode.string "surface" ] )
-                , ( "entityId", Json.Encode.string planet )
+                , ( "components"
+                  , Json.Encode.list
+                        [ Json.Encode.string "Surface"
+                        , Json.Encode.string "Position"
+                        , Json.Encode.string "CelestialBody"
+                        ]
+                  )
+                , ( "entityIds"
+                  , Json.Encode.list
+                        (List.map
+                            (\planet -> Json.Encode.string planet)
+                            planets
+                        )
+                  )
                 ]
     in
         object
