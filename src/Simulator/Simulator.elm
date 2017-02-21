@@ -6,14 +6,15 @@ import Html.Events exposing (onClick)
 import WebSocket
 import Planet.Grid
 import Json.Decode exposing (..)
-import Json.Decode.Pipeline exposing (decode, required, hardcoded)
+import Json.Decode.Pipeline exposing (decode, required, hardcoded, optional)
+import Json.Encode exposing (encode, object)
 
 
 -- MODEL
 
 
 type alias Simulator =
-    { count : Int
+    { speed : Int
     , play : Bool
     , pending : Bool
     }
@@ -21,7 +22,7 @@ type alias Simulator =
 
 initSimModel : Simulator
 initSimModel =
-    { count = 0
+    { speed = 0
     , play = False
     , pending = False
     }
@@ -48,7 +49,7 @@ view simulator =
     div [ class "py1" ]
         [ btnActive simulator
         , btnSpeedIncrease
-        , span [] [ text (toString simulator.count) ]
+        , span [] [ text (toString simulator.speed) ]
         , btnSpeedDecrease
         ]
 
@@ -89,19 +90,35 @@ update : Msg -> Simulator -> ( Simulator, Cmd Msg )
 update message simulator =
     case message of
         Increase ->
-            ( { simulator | count = min 4 simulator.count + 1 }, Cmd.none )
+            let
+                newSimulator =
+                    { simulator | speed = min 4 simulator.speed + 1 }
+            in
+                ( newSimulator
+                , WebSocket.send Planet.Grid.echoServer (simulatorRequest simulator.play newSimulator.speed)
+                )
 
         Decrease ->
-            ( { simulator | count = max 1 simulator.count - 1 }, Cmd.none )
+            let
+                newSimulator =
+                    { simulator | speed = max 1 simulator.speed - 1 }
+            in
+                ( newSimulator
+                , WebSocket.send Planet.Grid.echoServer (simulatorRequest simulator.play newSimulator.speed)
+                )
 
         Play ->
-            ( { simulator | pending = True }, WebSocket.send Planet.Grid.echoServer """{"type":"simulator", "data":true }""" )
+            ( { simulator | pending = True }
+            , WebSocket.send Planet.Grid.echoServer (simulatorRequest True (playSpeed simulator.speed))
+            )
 
         Pause ->
-            ( { simulator | pending = True }, WebSocket.send Planet.Grid.echoServer """{"type":"simulator", "data":false }""" )
+            ( { simulator | pending = True }
+            , WebSocket.send Planet.Grid.echoServer (simulatorRequest False 0)
+            )
 
         ReceiveMessage received ->
-            case decodeString simulatorDecoder received of
+            case decodeString (simulatorDecoder simulator.speed) received of
                 Result.Ok newSimulator ->
                     ( { newSimulator | pending = False }, Cmd.none )
 
@@ -110,10 +127,34 @@ update message simulator =
                         ( { simulator | pending = False }, Cmd.none )
 
 
-simulatorDecoder : Decoder Simulator
-simulatorDecoder =
+playSpeed : Int -> Int
+playSpeed speed =
+    if speed == 0 then
+        1
+    else
+        speed
+
+
+simulatorRequest : Bool -> Int -> String
+simulatorRequest start speed =
+    let
+        data =
+            Json.Encode.object
+                [ ( "start", Json.Encode.bool start )
+                , ( "speed", Json.Encode.int speed )
+                ]
+    in
+        Json.Encode.object
+            [ ( "type", Json.Encode.string "simulator" )
+            , ( "data", data )
+            ]
+            |> encode 0
+
+
+simulatorDecoder : Int -> Decoder Simulator
+simulatorDecoder speed =
     decode Simulator
-        |> required "count" int
+        |> hardcoded speed
         |> required "play" bool
         |> required "pending" bool
 

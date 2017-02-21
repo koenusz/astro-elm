@@ -91,7 +91,6 @@ coordinatesFromIndex index surfaceSize =
             Tuple.first (sizeTypeToInt surfaceSize)
     in
         ( rem index gridWidth, index // gridWidth )
-            |> Debug.log "coordinates"
 
 
 renderTiles : Surface -> Html Action
@@ -160,8 +159,7 @@ update action model =
                 surface =
                     model.planet.surface
             in
-                Debug.log "position"
-                    ( { model | planet = { planet | surface = { surface | selected = position } } }, Cmd.none )
+                ( { model | planet = { planet | surface = { surface | selected = position } } }, Cmd.none )
 
         LoadTiles json ->
             case decodeString responseDecoder json of
@@ -184,8 +182,8 @@ update action model =
                             ( { model | planet = newPlanet }, Cmd.none )
 
                 Result.Err message ->
-                    Debug.log ("Grid.elm 227 " ++ message)
-                        ( emptyModel, Cmd.none )
+                    -- Debug.log ("Grid.elm 227 " ++ message)
+                    ( model, Cmd.none )
 
         RequestTiles ->
             ( model, WebSocket.send echoServer (tileRequest [ "1" ]) )
