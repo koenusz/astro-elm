@@ -20,8 +20,8 @@ view model =
         , div []
             [ page model ]
         , div []
-            [ Html.hr [] []
-            , Html.text <| toString model
+            [-- Html.hr [] []
+             -- , Html.text <| toString model
             ]
         ]
 

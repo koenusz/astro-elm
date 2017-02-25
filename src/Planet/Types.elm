@@ -91,6 +91,10 @@ type TerrainType
     | Mountains
     | Water
 
+type alias Mineral =
+    { name : String
+    , amount : Int
+    }
 
 stringToCelestialBodyType : String -> CelestialBodyType
 stringToCelestialBodyType input =

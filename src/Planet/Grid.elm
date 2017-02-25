@@ -136,12 +136,10 @@ renderTile tile planetSize selected index =
 view : Model -> Html Action
 view model =
     Html.div []
-        [ Html.button [ Html.Events.onClick RequestTiles ] [ Html.text "click me" ]
-        , Html.div
+        [ --Html.button [ Html.Events.onClick RequestTiles ] [ Html.text "click me" ]
+          Html.div
             [ Html.Attributes.style
                 [ ( "position", "relative" )
-                , ( "width", "100vw" )
-                , ( "height", "100vh" )
                 ]
             ]
             [ renderTiles model.planet.surface ]
