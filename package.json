@@ -21,7 +21,8 @@
     "api": "node api.js",
     "build": "webpack",
     "watch": "webpack --watch",
-    "dev": "webpack-dev-server --port 3000"
+    "dev": "webpack-dev-server --port 3000",
+    "css": "elm-css src\\css\\Stylesheets.elm -o src\\css"
   },
   "author": "",
   "license": "ISC"

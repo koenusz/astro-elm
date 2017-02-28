@@ -2,6 +2,7 @@
 
 require('ace-css/css/ace.css');
 require('font-awesome/css/font-awesome.css');
+require('./css/styles.css');
 var native = require('./Canvas/Native.js');
 
 // Require index.html so it gets copied to dist
