@@ -1,4 +1,4 @@
-module Css.PlanetCss exposing (CssClasses(..), CssIds(..), css)
+module Css.SolarCss exposing (CssClasses(..), CssIds(..), css)
 
 import Css exposing (..)
 import Css.Elements exposing (body, li)
@@ -6,8 +6,7 @@ import Css.Namespace exposing (namespace)
 
 
 type CssClasses
-    = Key
-    | Value
+    = Galaxy
 
 
 type CssIds
@@ -16,7 +15,7 @@ type CssIds
 
 css : Stylesheet
 css =
-    (stylesheet << namespace "planet")
+    (stylesheet << namespace "solar")
         [ body
             [ overflowX auto
             , minWidth (px 1280)
@@ -30,12 +29,11 @@ css =
             , padding (px 8)
             , margin zero
             ]
-        , class Key
-            [ backgroundColor (rgb 200 128 64)
-            , float Css.left
-            , Css.width (Css.pct 50)
-            , Css.maxHeight (Css.em 1)
-            , Css.whiteSpace Css.noWrap
+        , class Galaxy
+            [ backgroundColor (rgb 3 51 153)
+            , width (Css.pct 100)
+            , height (Css.pct 100)
+            , margin zero
             ]
         ]
 

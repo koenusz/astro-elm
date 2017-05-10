@@ -16,7 +16,9 @@
     "webpack-dev-middleware": "^1.8.4",
     "webpack-dev-server": "^1.16.2"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "elm-css-webpack-loader": "^2.0.2"
+  },
   "scripts": {
     "api": "node api.js",
     "build": "webpack",

@@ -28,7 +28,7 @@ module.exports = {
       },
       {
         test:    /\.elm$/,
-        exclude: [/elm-stuff/, /node_modules/],
+        exclude: [/elm-stuff/, /node_modules/, /Stylesheets.elm$/, /Css.elm$/],
         loader:  'elm-hot!elm-webpack?verbose=true&warn=true&debug=true',
       },
       {
@@ -39,9 +39,13 @@ module.exports = {
         test: /\.(ttf|eot|svg)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
         loader: 'file-loader',
       },
+      {
+        test: /src\/Stylesheets.elm$/,
+        loader: 'style!css!../../index.js'
+      }
     ],
 
-    noParse: /\.elm$/,
+    noParse: [/.elm$/],
   },
 
   devServer: {
