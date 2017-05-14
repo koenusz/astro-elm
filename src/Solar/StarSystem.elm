@@ -1,26 +1,17 @@
-module Solar.StarSystem exposing (view)
-
-{-
-   Rotating cube with colored sides.
--}
+module Solar.Starsystem exposing (..)
 
 import Html exposing (Html, div, button, text, input, hr)
-import Html.Attributes exposing (width, height, style, type_, placeholder, value)
-import Html.Events exposing (onInput)
 import Math.Matrix4 as Mat4 exposing (Mat4)
 import Math.Vector3 as Vec3 exposing (vec3, Vec3)
 import Math.Vector2 as Vec2 exposing (vec2, Vec2)
 import WebGL exposing (Mesh, Shader)
-import WebGL.Texture exposing (Texture, Error, loadWith, nonPowerOfTwoOptions)
+import WebGL.Texture exposing (Texture, Error)
 import Solar.Types exposing (Vertex, StarSystem, SpaceObject)
 import Solar.SceneGraph as SceneGraph
-import Task
-import Time exposing (Time)
 import Dict exposing (Dict)
 import Json.Decode exposing (int, map2, field, Decoder)
-
-
--- import AnimationFrame
+import Solar.Models exposing (Model)
+import Solar.Messages exposing (Msg(..))
 
 
 width_ : Int
@@ -33,26 +24,8 @@ height_ =
     800
 
 
-type WebGlMsg
-    = SetZoom String
-    | SetRotate String
-    | SetTranslateX String
-    | SetTranslateY String
-    | TextureLoaded String (Result Error Texture)
-    | MouseClick ( Int, Int )
-    | Tick Time
 
-
-type alias Model =
-    { zoom : Float
-    , rotate : Float
-    , translateX : Float
-    , translateY : Float
-    , starsystem : StarSystem
-    , textures : Dict String Texture
-    , mouse : Vec3
-    , theta : Time
-    }
+-- import AnimationFrame
 
 
 perspective : Mat4
@@ -65,70 +38,17 @@ camera zoom =
     Mat4.makeLookAt (vec3 0 0 (10 * zoom)) (vec3 0 0 0) (vec3 0 1 0)
 
 
-model : Model
-model =
-    Model 3 0 0 0 SceneGraph.starsystem Dict.empty (vec3 0 0 0) 0
 
-
-initCommand : Cmd WebGlMsg
-initCommand =
-    Task.attempt (TextureLoaded "font.png") (loadWith nonPowerOfTwoOptions "texture/font.png")
-
-
-main : Program Never Model WebGlMsg
-main =
-    Html.program
-        { init = ( model, initCommand )
-        , view = view
-        , subscriptions =
-            (\_ -> Sub.none)
-            --(\_ -> AnimationFrame.diffs Tick)
-        , update = update
-        }
-
-
-update : WebGlMsg -> Model -> ( Model, Cmd WebGlMsg )
-update msg model =
-    case msg of
-        SetZoom zoom ->
-            ( { model | zoom = stringToFloat zoom }, Cmd.none )
-
-        SetRotate rotate ->
-            ( { model | rotate = stringToFloat rotate }, Cmd.none )
-
-        SetTranslateX x ->
-            ( { model | translateX = stringToFloat x }, Cmd.none )
-
-        SetTranslateY y ->
-            ( { model | translateY = stringToFloat y }, Cmd.none )
-
-        TextureLoaded key textureResult ->
-            case textureResult of
-                Result.Ok val ->
-                    ( { model | textures = Dict.insert key val model.textures }, Cmd.none )
-
-                Result.Err err ->
-                    ( model, Cmd.none )
-
-        MouseClick position ->
-            ( select { model | mouse = tuple2ToVec3 position }
-            , Cmd.none
-            )
-
-        Tick time ->
-            let
-                theta_ =
-                    model.theta + time / 5000
-
-                newStars =
-                    List.map (SceneGraph.updateMatrix theta_ Nothing) model.starsystem.stars
-            in
-                ( { model | theta = theta_, starsystem = StarSystem newStars }, Cmd.none )
-
-
-tuple2ToVec3 : ( Int, Int ) -> Vec3
-tuple2ToVec3 tuple =
-    vec3 (toFloat (Tuple.first tuple)) (toFloat (Tuple.second tuple)) 0
+-- main : Program Never Model StarsystemMsg
+-- main =
+--     Html.program
+--         { init = ( model, initCommand )
+--         , view = view
+--         , subscriptions =
+--             (\_ -> Sub.none)
+--             --(\_ -> AnimationFrame.diffs Tick)
+--         , update = update
+--         }
 
 
 viewToClipspace : Vec3 -> Vec3
@@ -143,9 +63,12 @@ viewToClipspace view =
         vec3 x y 0
 
 
+
+{- Select an object in the view based on the clicklocation (raycasting) -}
+
+
 select : Model -> Model
 select model =
-    --{ model | starsystem = StarSystem (List.map (checkSelectionforSpaceObject model) model.starsystem.stars) }
     { model | starsystem = StarSystem (List.map (SceneGraph.update (checkSelectionforSpaceObject model)) model.starsystem.stars) }
 
 
@@ -209,17 +132,7 @@ clickInsideCircle center pointOnCircle mouse =
         (centerX - mouseX) ^ 2 + (centerY - mouseY) ^ 2 <= r2
 
 
-stringToFloat : String -> Float
-stringToFloat string =
-    case String.toFloat string of
-        Ok val ->
-            val
-
-        Err err ->
-            0
-
-
-spaceObjectLocation : Model -> SpaceObject -> Html WebGlMsg
+spaceObjectLocation : Model -> SpaceObject -> Html Msg
 spaceObjectLocation model spaceObject =
     div []
         [ div [] [ text spaceObject.name ]
@@ -239,68 +152,6 @@ spaceObjectLocation model spaceObject =
         ]
 
 
-view : Model -> Html WebGlMsg
-view model =
-    let
-        mouseX =
-            Vec3.getX model.mouse
-
-        mouseY =
-            Vec3.getY model.mouse
-
-        translation =
-            Mat4.makeTranslate (vec3 1 0 0)
-
-        defaultuniforms =
-            (uniforms model False Mat4.identity)
-
-        spaceObjects =
-            List.concatMap
-                (SceneGraph.walk (spaceObjectLocation model))
-                model.starsystem.stars
-    in
-        div []
-            [ div
-                []
-                [ div []
-                    [ button [] [ text "zoom" ]
-                    , input [ type_ "number", value (toString model.zoom), onInput SetZoom ] []
-                    ]
-                , div []
-                    [ button [] [ text "rotate" ]
-                    , input [ type_ "number", value (toString model.rotate), onInput SetRotate ] []
-                    ]
-                , div []
-                    [ button [] [ text "translate" ]
-                    , input [ type_ "number", value (toString model.translateX), onInput SetTranslateX ] []
-                    , input [ type_ "number", value (toString model.translateY), onInput SetTranslateY ] []
-                    ]
-                , div []
-                    [ button [ Html.Events.onClick (Tick 200) ] [ text "tick" ]
-                    ]
-                , div []
-                    [ text ("mouse " ++ toString model.mouse)
-                    , text ("clipspace " ++ toString (viewToClipspace (vec3 mouseX mouseY 0)))
-                    ]
-                , div []
-                    spaceObjects
-                ]
-            , WebGL.toHtml
-                [ width width_
-                , height height_
-                , Html.Events.on "click" (Json.Decode.map MouseClick offsetPosition)
-                , style
-                    [ ( "display", "block" )
-                    , ( "margin-left", "50px" )
-                    , ( "background-color", "#ccccff" )
-                    ]
-                ]
-                (prepareScene model)
-            , hr [] []
-            , text (toString model)
-            ]
-
-
 offsetPosition : Decoder ( Int, Int )
 offsetPosition =
     map2 (,) (field "offsetX" int) (field "offsetY" int)
@@ -309,11 +160,11 @@ offsetPosition =
 prepareScene : Model -> List WebGL.Entity
 prepareScene model =
     -- List.concatMap (prepareSpaceObject model Nothing) model.starsystem.stars
-    List.filterMap (\x -> x) (List.concatMap (SceneGraph.walk prepareSpaceObject2) model.starsystem.stars)
+    List.filterMap (\x -> x) (List.concatMap (SceneGraph.walk (prepareSpaceObject2 model)) model.starsystem.stars)
 
 
-prepareSpaceObject2 : SpaceObject -> Maybe WebGL.Entity
-prepareSpaceObject2 spaceObject =
+prepareSpaceObject2 : Model -> SpaceObject -> Maybe WebGL.Entity
+prepareSpaceObject2 model spaceObject =
     let
         transform =
             Mat4.mul spaceObject.worldMatrix spaceObject.localMatrix
