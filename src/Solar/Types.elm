@@ -21,6 +21,7 @@ type alias SpaceObject =
     , color : Color
     , children : Children
     , selected : Bool
+    , selectable : Bool
     }
 
 

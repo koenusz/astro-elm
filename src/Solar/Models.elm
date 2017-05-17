@@ -5,7 +5,7 @@ import Dict exposing (Dict)
 import WebGL.Texture exposing (Texture, loadWith, nonPowerOfTwoOptions)
 import Math.Vector3 as Vec3 exposing (vec3, Vec3)
 import Time exposing (Time)
-import Solar.SceneGraph exposing (starsystem)
+import Solar.SceneGraph exposing (starsystem, updateMatrix)
 import Solar.Messages exposing (Msg(TextureLoaded))
 import Task
 
@@ -24,9 +24,14 @@ type alias Model =
 
 init : Model
 init =
-    Model 3 0 0 0 starsystem Dict.empty (vec3 0 0 0) 0
+    let
+        initialisedSystem =
+            List.map (updateMatrix 0 Nothing) starsystem.stars
+    in
+        Model 3 0 0 0 (StarSystem initialisedSystem) Dict.empty (vec3 0 0 0) 0
 
 
 initCommand : Cmd Msg
 initCommand =
-    Task.attempt (TextureLoaded "font.png") (loadWith nonPowerOfTwoOptions "texture/font.png")
+    Cmd.batch
+        [ Task.attempt (TextureLoaded "font.png") (loadWith nonPowerOfTwoOptions "texture/font.png") ]

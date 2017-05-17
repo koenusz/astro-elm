@@ -71,8 +71,8 @@ starsystem model =
                     [ text ("mouse " ++ toString model.mouse)
                     , text ("clipspace " ++ toString (viewToClipspace (vec3 mouseX mouseY 0)))
                     ]
-                , div []
-                    spaceObjects
+                  --, div []
+                  --    spaceObjects
                 ]
             , WebGL.toHtml
                 [ width width_
@@ -85,6 +85,4 @@ starsystem model =
                     ]
                 ]
                 (Starsystem.prepareScene model)
-            , hr [] []
-            , text (toString model)
             ]

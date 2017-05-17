@@ -88,10 +88,13 @@ checkSelectionforSpaceObject model spaceObject =
         pointOnCircle =
             multiplyByViewAndLocation model spaceObject (vec3 0 1 0)
     in
-        clipspaceClick
-            |> clickInsideCircle center pointOnCircle
-            |> Debug.log spaceObject.name
-            |> selectSpaceObject
+        if spaceObject.selectable then
+            clipspaceClick
+                |> clickInsideCircle center pointOnCircle
+                |> Debug.log spaceObject.name
+                |> selectSpaceObject
+        else
+            selectSpaceObject False
 
 
 multiplyByViewAndLocation : Model -> SpaceObject -> Vec3 -> Vec3

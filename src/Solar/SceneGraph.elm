@@ -84,6 +84,7 @@ text =
     , color = Color.red
     , children = Children []
     , selected = False
+    , selectable = False
     }
 
 
@@ -95,21 +96,41 @@ star =
     , worldMatrix = Mat4.identity
     , localMatrix = transformMatrix 1 0 (vec3 0 0 0)
     , color = Color.yellow
-    , children = Children [ planet, text ]
+    , children = Children [ planetOrbit, text ]
     , selected = True
+    , selectable = True
     }
 
 
 planetOrbit : SpaceObject
 planetOrbit =
     { name = "planetOrbit"
+    , renderFunction = Nothing
+    , texture = ""
+    , worldMatrix = Mat4.identity
+    , localMatrix = transformMatrix 1 0 (vec3 0 0 0)
+    , color = Color.blue
+    , children = Children [ planet, planetOrbitMesh ]
+    , selected = False
+    , selectable = False
+    }
+
+
+
+--make sure the scale of the orbit mesh is equal to the radious of the orbiting spaceobject
+
+
+planetOrbitMesh : SpaceObject
+planetOrbitMesh =
+    { name = "planetOrbitMesh"
     , renderFunction = Just loop
     , texture = ""
     , worldMatrix = Mat4.identity
-    , localMatrix = transformMatrix 2 0.01 (vec3 0 0 0)
+    , localMatrix = transformMatrix 5 0 (vec3 0 0 0)
     , color = Color.blue
     , children = Children []
     , selected = False
+    , selectable = False
     }
 
 
@@ -123,6 +144,7 @@ planet =
     , color = Color.blue
     , children = Children [ moonOrbit ]
     , selected = False
+    , selectable = True
     }
 
 
@@ -136,6 +158,7 @@ moonOrbit =
     , color = Color.green
     , children = Children [ moon, moonOrbitMesh ]
     , selected = False
+    , selectable = False
     }
 
 
@@ -149,6 +172,7 @@ moonOrbitMesh =
     , color = Color.green
     , children = Children []
     , selected = False
+    , selectable = False
     }
 
 
@@ -162,4 +186,5 @@ moon =
     , color = Color.green
     , children = Children []
     , selected = False
+    , selectable = True
     }
