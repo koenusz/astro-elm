@@ -17,14 +17,23 @@ type alias Simulator =
     { speed : Int
     , play : Bool
     , pending : Bool
+    , time : Float
+    }
+
+
+type alias SimulatorUpdate =
+    { speed : Int
+    , play : Bool
+    , pending : Bool
     }
 
 
 initSimModel : Simulator
 initSimModel =
-    { speed = 0
+    { speed = 1
     , play = False
     , pending = False
+    , time = 0
     }
 
 
@@ -38,6 +47,11 @@ type Msg
     | Play
     | Pause
     | ReceiveMessage String
+    | ReceiveTick String
+
+
+type alias TickMessage =
+    { time : Float }
 
 
 
@@ -108,7 +122,7 @@ update message simulator =
                 )
 
         Play ->
-            ( { simulator | pending = True }
+            ( { simulator | pending = True, speed = playSpeed simulator.speed }
             , WebSocket.send Planet.Grid.echoServer (simulatorRequest True (playSpeed simulator.speed))
             )
 
@@ -120,7 +134,16 @@ update message simulator =
         ReceiveMessage received ->
             case decodeString (simulatorDecoder simulator.speed) received of
                 Result.Ok newSimulator ->
-                    ( { newSimulator | pending = False }, Cmd.none )
+                    ( { simulator | speed = newSimulator.speed, play = newSimulator.play, pending = False }, Cmd.none )
+
+                Result.Err message ->
+                    Debug.log ("Error" ++ message)
+                        ( { simulator | pending = False }, Cmd.none )
+
+        ReceiveTick tick ->
+            case decodeString tickDecoder tick of
+                Result.Ok tick ->
+                    ( { simulator | time = tick.time }, Cmd.none )
 
                 Result.Err message ->
                     Debug.log ("Error" ++ message)
@@ -151,9 +174,15 @@ simulatorRequest start speed =
             |> encode 0
 
 
-simulatorDecoder : Int -> Decoder Simulator
+tickDecoder : Decoder TickMessage
+tickDecoder =
+    decode TickMessage
+        |> required "time" float
+
+
+simulatorDecoder : Int -> Decoder SimulatorUpdate
 simulatorDecoder speed =
-    decode Simulator
+    decode SimulatorUpdate
         |> hardcoded speed
         |> required "play" bool
         |> required "pending" bool
@@ -161,4 +190,7 @@ simulatorDecoder speed =
 
 subscriptions : Simulator -> Sub Msg
 subscriptions _ =
-    WebSocket.listen Planet.Grid.echoServer ReceiveMessage
+    Sub.batch
+        [ WebSocket.listen Planet.Grid.echoServer ReceiveMessage
+        , WebSocket.listen Planet.Grid.echoServer ReceiveTick
+        ]
